@@ -23,33 +23,33 @@ impl Lexer {
             tok_str: String::new(),
         }
     }
-    
+
     fn is_eof(&self) -> bool {
-        self.cursor > self.chars.len()-1
+        self.cursor > self.chars.len() - 1
     }
-    
+
     fn peek(&self) -> Option<char> {
         if self.is_eof() {
             return None;
         }
-        
+
         Some(self.chars[self.cursor])
     }
-    
+
     fn eat(&mut self) -> char {
         if self.is_eof() {
-            return EOF
+            return EOF;
         }
-        
+
         let c = self.chars[self.cursor];
 
-        self.cursor+=1;
-        self.pos_within_tok+=1;
+        self.cursor += 1;
+        self.pos_within_tok += 1;
 
         self.tok_str.push(c);
         c
     }
-    
+
     fn eat_while(&mut self, pred: fn(char) -> bool) {
         while let Some(c) = self.peek() {
             if pred(c) {
@@ -59,19 +59,20 @@ impl Lexer {
             }
         }
     }
-    
+
     fn reset_pos_within_tok(&mut self) {
-        self.pos_last_tok=self.cursor;
-        self.pos_within_tok=0;
+        self.pos_last_tok = self.cursor;
+        self.pos_within_tok = 0;
         self.tok_str.clear();
     }
 
     fn span(&self) -> Span {
         let start = self.pos_last_tok;
         let end = self.cursor;
-        
+
         let literal = self.tok_str.clone();
-        
+
         Span::new(start, end, literal)
     }
-} 
+}
+

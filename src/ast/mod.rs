@@ -14,11 +14,7 @@ pub struct Ident {
 
 impl Ident {
     pub fn new(name: String, pos: (usize, usize), context: Context) -> Self {
-        Self {
-            name,
-            pos,
-            context,
-        }
+        Self { name, pos, context }
     }
 }
 
@@ -36,8 +32,15 @@ pub enum Expr {
     Bool(bool),
     Char(char),
     Var(Ident),
-    Func { name: Ident, params: Vec<FuncParam>, ret: Type},
-    FuncCall { name: Ident, args: Vec<Expr>},
+    Func {
+        name: Ident,
+        params: Vec<FuncParam>,
+        ret: Type,
+    },
+    FuncCall {
+        name: Ident,
+        args: Vec<Expr>,
+    },
 }
 
 #[derive(Debug)]

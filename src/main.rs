@@ -1,5 +1,5 @@
-mod lexer;
 mod ast;
+mod lexer;
 mod parser;
 
 fn main() {
@@ -7,16 +7,20 @@ fn main() {
 }
 
 mod test {
-    use crate::{lexer::{
-        token::{Token, TokenKind},
-        Lexer,
-    }, parser::Parser};
+    use crate::{
+        lexer::{
+            token::{Token, TokenKind},
+            Lexer,
+        },
+        parser::Parser,
+    };
 
     #[test]
     fn lexer() {
-        let mut lexer = Lexer::new("fn : ((int) -> int) -> [int]");
+        //let mut lexer = Lexer::new("fn : ((int) -> int) -> [int]");
+        let mut lexer = Lexer::new("fn : () -> int");
         let mut tokens = Vec::<Token>::new();
-        
+
         let mut i = 1;
 
         loop {
@@ -28,13 +32,13 @@ mod test {
             } else {
                 println!("{i}: {:?}", token.kind());
             }
-            
+
             tokens.push(token);
-            i+=1;
+            i += 1;
         }
-        
+
         let mut parser = Parser::new(tokens);
-        let func = parser.decl().unwrap();
+        let func = parser.stmt().unwrap();
         println!("{:?}", func);
     }
 }
