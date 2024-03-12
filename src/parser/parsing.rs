@@ -1,6 +1,6 @@
 use crate::{
     ast::{Context, Expr, Ident, Stmt, Type},
-    lexer::token::{self, TokenKind},
+    lexer::token::{self, Token, TokenKind},
 };
 
 use super::{ParseError, ParseResult, Parser};
@@ -15,16 +15,16 @@ impl Parser {
             TokenKind::RightArrow => {
                 self.advance();
                 self.eaw();
-                
+
                 let ret_t = self.t_type()?;
 
-                return Ok(ret_t);
+                Ok(ret_t)
             }
-            TokenKind::OpenCurly | TokenKind::KwDo => return Ok(Type::Void),
-            _ => return Err(ParseError::UnexpectedToken(token)),
+            TokenKind::OpenCurly | TokenKind::KwDo => Ok(Type::Void),
+            _ => Err(ParseError::UnexpectedToken(token)),
         }
     }
-    
+
     // ARRAY_TYPE = [ ~ Type ~ ]
     fn array_type(&mut self) -> ParseResult<Type> {
         let token = self.peek().clone();
@@ -33,9 +33,9 @@ impl Parser {
         if kind == TokenKind::OpenBracket {
             self.advance();
             self.eaw();
-            
+
             let t_type = self.t_type()?;
-            
+
             self.eaw();
 
             let token = self.peek().clone();
@@ -93,7 +93,7 @@ impl Parser {
             ret: Box::new(ret),
         })
     }
-    
+
     fn t_type(&mut self) -> ParseResult<Type> {
         let token = self.peek().clone();
         let kind = token.kind();
@@ -109,32 +109,63 @@ impl Parser {
         }
     }
 
-    // DECL = Ident ~ : ~ Type
-    pub fn decl(&mut self) -> ParseResult<Stmt> {
-        let token = self.peek().clone();
-        let kind = token.kind();
-        
-        if kind != TokenKind::Identifier {
-            return Err(ParseError::UnexpectedToken(token));
-        }
-
-        let name = Ident::new(token.literal(), token.pos(), Context::Var);
-
-        self.advance();
-        self.eaw();
-
+    fn expr(&mut self) -> ParseResult<Expr> {
         let token = self.peek().clone();
         let kind = token.kind();
 
-        if kind != TokenKind::Column {
-            return Err(ParseError::UnexpectedToken(token));
+        match kind {
+            TokenKind::Integer => {
+                let value = match token.literal().parse::<i64>() {
+                    Ok(v) => v,
+                    Err(e) => return Err(ParseError::UnexpectedToken(token)),
+                };
+                Ok(Expr::Int(value))
+            }
+            _ => Err(ParseError::UnexpectedToken(token)),
         }
+    }
 
-        self.advance();
-        self.eaw();
+    // ASGN | DECL
+    fn asgn_or_decl(&mut self, ident: Token) -> ParseResult<Stmt> {
+        let token = self.peek().clone();
+        let kind = token.kind();
 
-        let t_type = self.t_type()?;
+        match kind {
+            // DECL = IDENT ~ : ~ TYPE
+            TokenKind::Column => {
+                self.advance();
+                self.eaw();
 
-        Ok(Stmt::Decl { name, t_type })
+                let t_type = self.t_type()?;
+                let name = Ident::new(token.literal(), token.pos(), Context::Var);
+
+                Ok(Stmt::Decl { name, t_type })
+            }
+            // ASGN = IDENT ~ = ~ EXPR
+            TokenKind::Eq => {
+                self.advance();
+                self.eaw();
+
+                let name = Ident::new(token.literal(), token.pos(), Context::Var);
+                let expr = self.expr()?;
+
+                Ok(Stmt::Asgn { name, expr })
+            }
+            _ => Err(ParseError::UnexpectedToken(token)),
+        }
+    }
+
+    pub fn stmt(&mut self) -> ParseResult<Stmt> {
+        let token = self.peek().clone();
+        let kind = token.kind();
+
+        match kind {
+            TokenKind::Identifier => {
+                self.advance();
+                self.eaw();
+                self.asgn_or_decl(token)
+            }
+            _ => Err(ParseError::UnexpectedToken(token)),
+        }
     }
 }
