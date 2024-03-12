@@ -22,6 +22,7 @@ impl Lexer {
             '-' => self.right_arrow(),
             '[' => TokenKind::OpenBracket,
             ']' => TokenKind::ClosedBracket,
+            c if c.is_numeric() => self.integer(),
             c if c.is_whitespace() => self.whitespace(),
             _ => TokenKind::Unknown,
         };
@@ -72,7 +73,12 @@ impl Lexer {
         self.eat_while(is_whitespace);
         TokenKind::Whitespace
     }
-    
+
+    fn integer(&mut self) -> TokenKind {
+        self.eat_while(is_integer_cont);
+        TokenKind::Integer
+    }
+
     fn right_arrow(&mut self) -> TokenKind {
         if let Some(c) = self.peek() {
             if c == '>' {
@@ -90,4 +96,8 @@ fn is_ident_cont(c: char) -> bool {
 
 fn is_whitespace(c: char) -> bool {
     c.is_whitespace()
+}
+
+fn is_integer_cont(c: char) -> bool {
+    c.is_numeric()
 }

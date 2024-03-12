@@ -39,7 +39,9 @@ pub enum TokenKind {
     ClosedCurly,
     OpenBracket,
     ClosedBracket,
-    //Special
+    // Literals
+    Integer,
+    // Special
     Whitespace,
     Unknown,
     EOF,
@@ -63,21 +65,19 @@ pub struct Token {
 
 impl Token {
     pub fn new(kind: TokenKind, span: Span) -> Self {
-        Self {
-            kind,
-            span,
-        }
+        Self { kind, span }
     }
-    
+
     pub fn kind(&self) -> TokenKind {
         self.kind
     }
-    
+
     pub fn literal(&self) -> String {
         self.span.literal.clone()
     }
-    
+
     pub fn pos(&self) -> (usize, usize) {
         (self.span.start, self.span.end)
     }
 }
+
