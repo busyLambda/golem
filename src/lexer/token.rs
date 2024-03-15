@@ -19,6 +19,7 @@ impl Span {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum TokenKind {
     // Types
+    Tvoid,
     Tbool,
     Tint,
     Tfloat,
@@ -52,6 +53,7 @@ impl TokenKind {
         match self {
             TokenKind::Tint => true,
             TokenKind::Identifier => true,
+            TokenKind::Tvoid => true,
             _ => false,
         }
     }

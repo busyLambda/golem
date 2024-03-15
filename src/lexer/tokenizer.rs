@@ -40,6 +40,7 @@ impl Lexer {
 
         match self.tok_str.as_str() {
             "do" => TokenKind::KwDo,
+            "void" => TokenKind::Tvoid,
             "bool" => TokenKind::Tbool,
             "int" => TokenKind::Tint,
             "float" => TokenKind::Tfloat,

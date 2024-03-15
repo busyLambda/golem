@@ -101,6 +101,10 @@ impl Parser {
             TokenKind::Tint => {
                 self.advance();
                 Ok(Type::Int)
+            },
+            TokenKind::Tvoid => {
+                self.advance();
+                Ok(Type::Void)
             }
             TokenKind::OpenBracket => self.array_type(),
             TokenKind::OpenParen => self.func_type(),

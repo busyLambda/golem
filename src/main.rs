@@ -8,17 +8,16 @@ fn main() {
 
 mod test {
     use crate::{
-        lexer::{
+        ast::File, lexer::{
             token::{Token, TokenKind},
             Lexer,
-        },
-        parser::Parser,
+        }, parser::Parser
     };
 
     #[test]
     fn lexer() {
         //let mut lexer = Lexer::new("fn : ((int) -> int) -> [int]");
-        let mut lexer = Lexer::new("fn : () -> int\nfn = () do 3");
+        let mut lexer = Lexer::new("fn : () -> int\nfn = () do 3\nmain : () -> void\nmain = () do 3");
         let mut tokens = Vec::<Token>::new();
 
         let mut i = 1;
@@ -41,7 +40,8 @@ mod test {
         }
 
         let mut parser = Parser::new(tokens);
-        let func = parser.file(String::from("testing")).unwrap();
-        println!("{:?}", func);
+        let mut file = parser.file(String::from("testing")).unwrap();
+        File::unify_funcs(file.stmts());
+        println!("{:?}", file);
     }
 }
