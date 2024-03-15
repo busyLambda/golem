@@ -32,9 +32,9 @@ pub enum Expr {
     Bool(bool),
     Char(char),
     Var(Ident),
-    Func {
-        name: Ident,
-        params: Vec<FuncParam>,
+    FuncImpl {
+        stmts: Box<Vec<Stmt>>,
+        params: Vec<Ident>,
         ret: Type,
     },
     FuncCall {
@@ -73,4 +73,20 @@ pub enum Stmt {
         d_type: Option<Type>,
         expr: Expr,
     },
+    Expr(Expr)
+}
+
+#[derive(Debug)]
+pub struct File {
+    name: String,
+    stmts: Vec<Stmt>,
+}
+
+impl File {
+    pub fn new(name: String, stmts: Vec<Stmt>) -> Self {
+        Self {
+            name,
+            stmts,
+        }
+    }
 }

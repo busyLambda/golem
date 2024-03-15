@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Context, Expr, Ident, Stmt, Type},
+    ast::{Context, Expr, File, Ident, Stmt, Type},
     lexer::token::{self, Token, TokenKind},
 };
 
@@ -20,7 +20,6 @@ impl Parser {
 
                 Ok(ret_t)
             }
-            TokenKind::OpenCurly | TokenKind::KwDo => Ok(Type::Void),
             _ => Err(ParseError::UnexpectedToken(token)),
         }
     }
@@ -108,6 +107,74 @@ impl Parser {
             _ => Err(ParseError::UnexpectedToken(token)),
         }
     }
+    
+    fn func_body(&mut self) -> ParseResult<Vec<Stmt>> {
+        let token = self.peek().clone();
+        let kind = token.kind();
+        
+        let mut stmts = Vec::<Stmt>::new();
+
+        match kind {
+            TokenKind::KwDo => {
+                self.advance();
+                self.eaw();
+                
+                let stmt = self.stmt()?;
+                
+                stmts.push(stmt);
+
+                self.eaw();
+                
+                Ok(stmts)
+            }
+            TokenKind::OpenCurly => {
+                todo!()
+            }
+            _ => Err(ParseError::UnexpectedToken(token))
+        }
+    }
+
+    fn func_expr(&mut self) -> ParseResult<Expr> {
+        if self.is_match(TokenKind::OpenParen) {
+            self.advance();
+            self.eaw();
+
+            let mut params = Vec::<Ident>::new();
+            let mut stmts = Box::new(Vec::<Stmt>::new());
+
+            loop {
+                let ttoken = self.peek().clone();
+                let kind = ttoken.kind();
+
+                match kind {
+                    TokenKind::Identifier => {
+                        self.advance();
+                        self.eaw();
+
+                        let ident = Ident::new(ttoken.literal(), ttoken.pos(), Context::Var);
+                        params.push(ident);
+                    }
+                    TokenKind::ClosedParen => {
+                        self.advance();
+                        self.eaw();
+
+                        stmts = Box::new(self.func_body()?);
+
+                        break;
+                    }
+                    _ => return { Err(ParseError::UnexpectedToken(ttoken)) },
+                }
+            }
+
+            Ok(Expr::FuncImpl {
+                stmts,
+                params,
+                ret: Type::Int,
+            })
+        } else {
+            todo!()
+        }
+    }
 
     fn expr(&mut self) -> ParseResult<Expr> {
         let token = self.peek().clone();
@@ -117,10 +184,12 @@ impl Parser {
             TokenKind::Integer => {
                 let value = match token.literal().parse::<i64>() {
                     Ok(v) => v,
-                    Err(e) => return Err(ParseError::UnexpectedToken(token)),
+                    Err(_) => return Err(ParseError::UnexpectedToken(token)),
                 };
+                self.advance();
                 Ok(Expr::Int(value))
             }
+            TokenKind::OpenParen => self.func_expr(),
             _ => Err(ParseError::UnexpectedToken(token)),
         }
     }
@@ -137,7 +206,7 @@ impl Parser {
                 self.eaw();
 
                 let t_type = self.t_type()?;
-                let name = Ident::new(token.literal(), token.pos(), Context::Var);
+                let name = Ident::new(ident.literal(), ident.pos(), Context::Var);
 
                 Ok(Stmt::Decl { name, t_type })
             }
@@ -146,7 +215,7 @@ impl Parser {
                 self.advance();
                 self.eaw();
 
-                let name = Ident::new(token.literal(), token.pos(), Context::Var);
+                let name = Ident::new(ident.literal(), ident.pos(), Context::Var);
                 let expr = self.expr()?;
 
                 Ok(Stmt::Asgn { name, expr })
@@ -155,7 +224,7 @@ impl Parser {
         }
     }
 
-    pub fn stmt(&mut self) -> ParseResult<Stmt> {
+    fn stmt(&mut self) -> ParseResult<Stmt> {
         let token = self.peek().clone();
         let kind = token.kind();
 
@@ -165,7 +234,29 @@ impl Parser {
                 self.eaw();
                 self.asgn_or_decl(token)
             }
+            TokenKind::Integer => {
+                Ok(Stmt::Expr(self.expr()?))
+            }
             _ => Err(ParseError::UnexpectedToken(token)),
         }
+    }
+
+    // FILE = { ~ STMT ~ }* EOF
+    pub fn file(&mut self, name: String) -> ParseResult<File> {
+        let mut stmts = Vec::<Stmt>::new();
+
+        loop {
+            self.eaw();
+
+            if self.is_match(TokenKind::EOF) {
+                break;
+            }
+
+            let stmt = self.stmt()?;
+
+            stmts.push(stmt);
+        }
+
+        Ok(File::new(name, stmts))
     }
 }

@@ -18,27 +18,30 @@ mod test {
     #[test]
     fn lexer() {
         //let mut lexer = Lexer::new("fn : ((int) -> int) -> [int]");
-        let mut lexer = Lexer::new("fn : () -> int");
+        let mut lexer = Lexer::new("fn : () -> int\nfn = () do 3");
         let mut tokens = Vec::<Token>::new();
 
         let mut i = 1;
 
         loop {
             let token = lexer.next();
-            if token.kind() == TokenKind::EOF {
-                break;
-            } else if token.kind().is_type() {
+            if token.kind().is_type() {
                 println!("{i}: {:?} -> {}", token.kind(), token.literal());
             } else {
                 println!("{i}: {:?}", token.kind());
             }
 
-            tokens.push(token);
+            tokens.push(token.clone());
+
+            if token.kind() == TokenKind::EOF {
+                break
+            }
+
             i += 1;
         }
 
         let mut parser = Parser::new(tokens);
-        let func = parser.stmt().unwrap();
+        let func = parser.file(String::from("testing")).unwrap();
         println!("{:?}", func);
     }
 }
