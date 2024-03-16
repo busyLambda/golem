@@ -1,7 +1,7 @@
 # GOLEM
 
 ## Description
-Garbage collected porgramming language that targets C
+Garbage collected programming language that targets C
 
 ## Examples
 
